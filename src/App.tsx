@@ -5,7 +5,7 @@ function App() {
     <div className="app">
       <div className="welcome-container">
         <h1>Welcome to Bioptrics LMS</h1>
-        <p>Learning Management System</p>
+        <p>Learning Management System.</p>
       </div>
     </div>
   )
