@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, ShoppingBag, Building2, BarChart3, FileText, Settings, ArrowLeft } from 'lucide-react';
 
 interface SidebarProps {
@@ -6,22 +7,29 @@ interface SidebarProps {
 }
 
 const administrationItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'content-library', label: 'Content Library', icon: BookOpen },
-  { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { id: 'content-library', label: 'Content Library', icon: BookOpen, path: '/content-library' },
+  { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag, path: '/marketplace' },
 ];
 
 const managementItems = [
-  { id: 'organizations', label: 'Organizations', icon: Building2 },
-  { id: 'reports', label: 'Reports', icon: BarChart3 },
-  { id: 'billing', label: 'Billing', icon: FileText },
+  { id: 'organizations', label: 'Organizations', icon: Building2, path: '/organizations' },
+  { id: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
+  { id: 'billing', label: 'Billing', icon: FileText, path: '/billing' },
 ];
 
 const systemItems = [
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'dashboard' }) => {
+export const Sidebar: React.FC<SidebarProps> = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
   return (
     <div className="w-64 bg-beige-100 h-screen border-r border-gray-200 flex flex-col fixed left-0 top-0 overflow-y-auto">
       {/* Logo Section */}
@@ -46,12 +54,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'dashboard' }) =>
           </p>
           {administrationItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.id === activeItem;
+            const active = isActive(item.path);
             return (
               <button
                 key={item.id}
+                onClick={() => navigate(item.path)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
+                  active
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-700 hover:bg-white/50'
                 }`}
@@ -70,12 +79,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'dashboard' }) =>
           </p>
           {managementItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.id === activeItem;
+            const active = isActive(item.path);
             return (
               <button
                 key={item.id}
+                onClick={() => navigate(item.path)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
+                  active
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-700 hover:bg-white/50'
                 }`}
@@ -94,12 +104,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeItem = 'dashboard' }) =>
           </p>
           {systemItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.id === activeItem;
+            const active = isActive(item.path);
             return (
               <button
                 key={item.id}
+                onClick={() => navigate(item.path)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
+                  active
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-700 hover:bg-white/50'
                 }`}
