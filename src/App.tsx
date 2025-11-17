@@ -1,14 +1,8 @@
 import './App.css'
+import { Dashboard } from './pages/SuperAdmin/Dashboard'
 
 function App() {
-  return (
-    <div className="app">
-      <div className="welcome-container">
-        <h1>Welcome to Bioptrics LMS</h1>
-        <p>Learning Management System.</p>
-      </div>
-    </div>
-  )
+  return <Dashboard />
 }
 
 export default App
