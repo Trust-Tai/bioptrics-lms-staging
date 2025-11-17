@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Eye } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -11,7 +11,7 @@ import type { Block } from '../../types/course.types';
 
 export const CourseBuilder: React.FC = () => {
   const navigate = useNavigate();
-  const { courseId } = useParams();
+  // const { courseId } = useParams(); // TODO: Use this when integrating with backend
   const [courseTitle, setCourseTitle] = useState('Untitled Course');
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | undefined>();

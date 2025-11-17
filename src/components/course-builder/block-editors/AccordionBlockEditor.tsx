@@ -70,7 +70,7 @@ export const AccordionBlockEditor: React.FC<AccordionBlockEditorProps> = ({ bloc
             <p className="text-sm text-gray-500">No items yet. Click "Add Item" to get started.</p>
           </div>
         ) : (
-          items.map((item, index) => (
+          items.map((item) => (
             <div key={item.id} className="border border-gray-300 rounded-lg p-4 bg-gray-50">
               <div className="flex items-start gap-2 mb-3">
                 <GripVertical size={20} className="text-gray-400 mt-2 cursor-move" />
