@@ -57,6 +57,11 @@ export interface QuizSettings {
   showCorrectAnswers: boolean;
   showScoreImmediately: boolean;
   requireCompletion: boolean;
+  displayMode: 'all-in-one' | 'multi-step';
+  questionsPerPage: number;
+  showThankYouScreen: boolean;
+  thankYouMessage: string;
+  buttonColor: string;
 }
 
 export interface QuizBuilderState {

@@ -22,6 +22,12 @@ export const SplitScreenCourseBuilder: React.FC = () => {
   const [modules, setModules] = useState<ModuleData[]>([]);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(['1']));
   const [selectedTab, setSelectedTab] = useState<Record<string, 'goals' | 'contents'>>({});
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>('');
+  const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
+  const [editingTopicTitle, setEditingTopicTitle] = useState<string>('');
+  const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
+  const [editingQuizTitle, setEditingQuizTitle] = useState<string>('');
 
   // Initialize with default modules
   useEffect(() => {
@@ -289,6 +295,104 @@ export const SplitScreenCourseBuilder: React.FC = () => {
     }));
   };
 
+  const handleUpdateModuleGoals = (moduleId: string, goals: string) => {
+    setModules(prev => prev.map(module => {
+      if (module.id === moduleId) {
+        return {
+          ...module,
+          goals: goals
+        };
+      }
+      return module;
+    }));
+  };
+
+  const handleStartEditingTitle = (moduleId: string, currentTitle: string) => {
+    setEditingModuleId(moduleId);
+    setEditingTitle(currentTitle);
+  };
+
+  const handleFinishEditingTitle = (moduleId: string) => {
+    if (editingTitle.trim()) {
+      setModules(prev => prev.map(module => {
+        if (module.id === moduleId) {
+          return {
+            ...module,
+            title: editingTitle.trim()
+          };
+        }
+        return module;
+      }));
+    }
+    setEditingModuleId(null);
+    setEditingTitle('');
+  };
+
+  const handleCancelEditingTitle = () => {
+    setEditingModuleId(null);
+    setEditingTitle('');
+  };
+
+  // Topic title editing handlers
+  const handleStartEditingTopic = (topicId: string, currentTitle: string) => {
+    setEditingTopicId(topicId);
+    setEditingTopicTitle(currentTitle);
+  };
+
+  const handleFinishEditingTopic = (moduleId: string, topicId: string) => {
+    if (editingTopicTitle.trim()) {
+      setModules(prev => prev.map(module => {
+        if (module.id === moduleId) {
+          const updatedTopics = module.topics.map(topic => {
+            if (topic.id === topicId) {
+              return { ...topic, title: editingTopicTitle.trim() };
+            }
+            return topic;
+          });
+          return { ...module, topics: updatedTopics };
+        }
+        return module;
+      }));
+    }
+    setEditingTopicId(null);
+    setEditingTopicTitle('');
+  };
+
+  const handleCancelEditingTopic = () => {
+    setEditingTopicId(null);
+    setEditingTopicTitle('');
+  };
+
+  // Quiz title editing handlers
+  const handleStartEditingQuiz = (quizId: string, currentTitle: string) => {
+    setEditingQuizId(quizId);
+    setEditingQuizTitle(currentTitle);
+  };
+
+  const handleFinishEditingQuiz = (moduleId: string, quizId: string) => {
+    if (editingQuizTitle.trim()) {
+      setModules(prev => prev.map(module => {
+        if (module.id === moduleId) {
+          const updatedQuizzes = module.quizzes.map(quiz => {
+            if (quiz.id === quizId) {
+              return { ...quiz, title: editingQuizTitle.trim() };
+            }
+            return quiz;
+          });
+          return { ...module, quizzes: updatedQuizzes };
+        }
+        return module;
+      }));
+    }
+    setEditingQuizId(null);
+    setEditingQuizTitle('');
+  };
+
+  const handleCancelEditingQuiz = () => {
+    setEditingQuizId(null);
+    setEditingQuizTitle('');
+  };
+
   const handleDeleteTopic = (moduleId: string, topicId: string) => {
     setModules(prev => prev.map(module => {
       if (module.id === moduleId) {
@@ -471,18 +575,47 @@ export const SplitScreenCourseBuilder: React.FC = () => {
               {modules.map((module) => (
                 <div key={module.id} className="bg-white rounded-lg border border-gray-200">
                   {/* Module Header */}
-                  <div className="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer">
-                    <div className="flex items-center gap-3 flex-1" onClick={() => toggleModule(module.id)}>
-                      <button className="text-gray-400 hover:text-gray-600">
+                  <div className="flex items-center justify-between p-4 hover:bg-gray-50">
+                    <div className="flex items-center gap-3 flex-1">
+                      <button 
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={() => toggleModule(module.id)}
+                      >
                         {expandedModules.has(module.id) ? (
                           <ChevronDown size={16} />
                         ) : (
                           <ChevronRight size={16} />
                         )}
                       </button>
-                      <span className="font-medium text-gray-900">
-                        {module.order}. {module.title}
-                      </span>
+                      {editingModuleId === module.id ? (
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onBlur={() => handleFinishEditingTitle(module.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleFinishEditingTitle(module.id);
+                            } else if (e.key === 'Escape') {
+                              handleCancelEditingTitle();
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-medium text-gray-900 bg-white border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          autoFocus
+                        />
+                      ) : (
+                        <span 
+                          className="font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEditingTitle(module.id, module.title);
+                          }}
+                          title="Click to edit module title"
+                        >
+                          {module.order}. {module.title}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <button className="p-1 text-gray-400 hover:text-gray-600">
@@ -540,11 +673,18 @@ export const SplitScreenCourseBuilder: React.FC = () => {
                             </div>
                           </div>
 
-                          {module.goals && (
-                            <div>
-                              <p className="text-sm text-gray-700">{module.goals}</p>
-                            </div>
-                          )}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
+                              Module Description
+                            </label>
+                            <textarea
+                              value={module.goals || ''}
+                              onChange={(e) => handleUpdateModuleGoals(module.id, e.target.value)}
+                              placeholder="Describe what this module covers and what participants will learn..."
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-vertical text-sm"
+                            />
+                          </div>
 
                           {/* Learning Objectives Section */}
                           <div>
@@ -640,6 +780,12 @@ export const SplitScreenCourseBuilder: React.FC = () => {
                                   moduleId={module.id}
                                   courseId="new-course"
                                   onDelete={handleDeleteTopic}
+                                  isEditing={editingTopicId === topic.id}
+                                  editingTitle={editingTopicTitle}
+                                  onStartEdit={handleStartEditingTopic}
+                                  onFinishEdit={handleFinishEditingTopic}
+                                  onCancelEdit={handleCancelEditingTopic}
+                                  onTitleChange={setEditingTopicTitle}
                                 />
                               ))}
                               
@@ -651,6 +797,12 @@ export const SplitScreenCourseBuilder: React.FC = () => {
                                   moduleId={module.id}
                                   courseId="new-course"
                                   onDelete={handleDeleteQuiz}
+                                  isEditing={editingQuizId === quiz.id}
+                                  editingTitle={editingQuizTitle}
+                                  onStartEdit={handleStartEditingQuiz}
+                                  onFinishEdit={handleFinishEditingQuiz}
+                                  onCancelEdit={handleCancelEditingQuiz}
+                                  onTitleChange={setEditingQuizTitle}
                                 />
                               ))}
                             </div>
