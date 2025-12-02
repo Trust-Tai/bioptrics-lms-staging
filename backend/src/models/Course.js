@@ -18,72 +18,74 @@ const courseSchema = new mongoose.Schema({
     enum: ['draft', 'published', 'archived'],
     default: 'draft'
   },
-  category: {
+  topic: {
     type: String,
-    required: [true, 'Course category is required'],
-    trim: true
-  },
-  difficulty: {
-    type: String,
-    enum: ['beginner', 'intermediate', 'advanced'],
-    default: 'beginner'
-  },
-  duration: {
-    type: String,
-    default: '30 min'
-  },
-  thumbnail: {
-    type: String,
-    default: null
-  },
-  blocks: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Block'
-  }],
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'Course creator is required']
+    required: true,
+    trim: true,
+    maxlength: 300
   },
   organizationId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization',
-    default: null // null means it's a global/template course
+    required: true
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  // New hierarchical structure
+  modules: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Module'
+  }],
+  // Course-level learning objectives
+  learningObjectives: [{
+    id: String,
+    text: String,
+    order: Number
+  }],
+  // Target audience
+  learnerAudience: {
+    type: String,
+    enum: ['Beginners', 'Intermediate', 'Advanced', 'All Levels'],
+    default: 'All Levels'
+  },
+  // Course duration
+  estimatedHours: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  estimatedMinutes: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // Legacy block support (for backward compatibility)
+  blocks: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Block'
+  }],
   isTemplate: {
     type: Boolean,
     default: false
   },
   templateCategory: {
     type: String,
-    enum: [
-      'Business Ethics',
-      'Career Management', 
-      'Change Management',
-      'Communication',
-      'Compliance',
-      'Critical Thinking',
-      'Customer Service'
-    ],
+    enum: ['Business Ethics', 'Career Management', 'Change Management', 'Communication', 'Compliance', 'Critical Thinking', 'Customer Service'],
     required: function() { return this.isTemplate; }
   },
   metrics: {
-    purchases: { type: Number, default: 0 },
     enrollments: { type: Number, default: 0 },
     completions: { type: Number, default: 0 },
-    rating: { type: Number, default: 0, min: 0, max: 5 },
-    ratingCount: { type: Number, default: 0 },
-    views: { type: Number, default: 0 }
+    averageRating: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 }
   },
   settings: {
-    allowDownload: { type: Boolean, default: false },
-    requireCompletion: { type: Boolean, default: true },
-    certificateEnabled: { type: Boolean, default: true },
-    timeLimit: { type: Number, default: null }, // in minutes
-    attempts: { type: Number, default: null } // null = unlimited
-  },
-  pricing: {
-    isFree: { type: Boolean, default: true },
+    allowComments: { type: Boolean, default: true },
+    requireCompletion: { type: Boolean, default: false },
+    certificateEnabled: { type: Boolean, default: false },
     price: { type: Number, default: 0 },
     currency: { type: String, default: 'USD' }
   },
