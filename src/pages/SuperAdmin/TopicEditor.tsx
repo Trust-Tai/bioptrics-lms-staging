@@ -2565,7 +2565,7 @@ export const TopicEditor: React.FC = () => {
                             {/* Word Count Display */}
                             {block.settings?.showWordCount && (
                               <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
-                                Word count: {block.settings.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length} words
+                                Word count: {block.settings.content.replace(/<[^>]*>/g, '').split(/\s+/).filter((word: string) => word.length > 0).length} words
                               </div>
                             )}
                             

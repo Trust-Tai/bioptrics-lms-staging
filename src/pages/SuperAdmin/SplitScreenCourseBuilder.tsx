@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { TopicCard } from '../../components/course-builder/TopicCard';
-import type { CourseSetupFormData, ModuleData } from '../../types/courseBuilder.types';
+import { QuizCard } from '../../components/course-builder/QuizCard';
+import type { CourseSetupFormData, ModuleData, QuizData } from '../../types/courseBuilder.types';
 
 export const SplitScreenCourseBuilder: React.FC = () => {
   const navigate = useNavigate();
@@ -108,12 +109,6 @@ export const SplitScreenCourseBuilder: React.FC = () => {
     }));
   };
 
-  const handleAddObjective = () => {
-    setFormData(prev => ({
-      ...prev,
-      learningObjectives: [...prev.learningObjectives, '']
-    }));
-  };
 
   const handleRemoveObjective = (index: number) => {
     if (formData.learningObjectives.length > 1) {
@@ -195,6 +190,52 @@ export const SplitScreenCourseBuilder: React.FC = () => {
         return {
           ...module,
           topics: [...module.topics, newTopic]
+        };
+      }
+      return module;
+    }));
+  };
+
+  const handleAddQuiz = (moduleId: string) => {
+    setModules(prev => prev.map(module => {
+      if (module.id === moduleId) {
+        const quizNumber = module.quizzes.length + 1;
+        const newQuiz: QuizData = {
+          id: `quiz-${moduleId}-${quizNumber}`,
+          title: `Quiz #${quizNumber}: Evaluation`,
+          description: '',
+          moduleId: moduleId,
+          order: quizNumber,
+          questions: [],
+          settings: {
+            timeLimit: 30,
+            passingScore: 80,
+            maxAttempts: 3,
+            allowRetakes: true,
+            shuffleQuestions: false,
+            shuffleOptions: false,
+            showCorrectAnswers: true,
+            showScoreImmediately: true,
+            requireCompletion: false
+          },
+          status: 'draft'
+        };
+        
+        return {
+          ...module,
+          quizzes: [...module.quizzes, newQuiz]
+        };
+      }
+      return module;
+    }));
+  };
+
+  const handleDeleteQuiz = (moduleId: string, quizId: string) => {
+    setModules(prev => prev.map(module => {
+      if (module.id === moduleId) {
+        return {
+          ...module,
+          quizzes: module.quizzes.filter(quiz => quiz.id !== quizId)
         };
       }
       return module;
@@ -575,7 +616,12 @@ export const SplitScreenCourseBuilder: React.FC = () => {
                               <Plus size={14} className="mr-1" />
                               New Topic
                             </Button>
-                            <Button size="sm" variant="outline" className="text-sm">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-sm"
+                              onClick={() => handleAddQuiz(module.id)}
+                            >
                               ✓ New Quiz
                             </Button>
                             <Button size="sm" variant="outline" className="text-sm">
@@ -583,9 +629,10 @@ export const SplitScreenCourseBuilder: React.FC = () => {
                             </Button>
                           </div>
                           
-                          {/* Topics List */}
-                          {module.topics && module.topics.length > 0 ? (
+                          {/* Topics and Quizzes List */}
+                          {(module.topics && module.topics.length > 0) || (module.quizzes && module.quizzes.length > 0) ? (
                             <div className="space-y-2">
+                              {/* Topics */}
                               {module.topics.map((topic) => (
                                 <TopicCard
                                   key={topic.id}
@@ -593,6 +640,17 @@ export const SplitScreenCourseBuilder: React.FC = () => {
                                   moduleId={module.id}
                                   courseId="new-course"
                                   onDelete={handleDeleteTopic}
+                                />
+                              ))}
+                              
+                              {/* Quizzes */}
+                              {module.quizzes.map((quiz) => (
+                                <QuizCard
+                                  key={quiz.id}
+                                  quiz={quiz}
+                                  moduleId={module.id}
+                                  courseId="new-course"
+                                  onDelete={handleDeleteQuiz}
                                 />
                               ))}
                             </div>

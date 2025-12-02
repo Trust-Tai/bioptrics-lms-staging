@@ -5,6 +5,7 @@ import { ContentLibrary } from './pages/SuperAdmin/ContentLibrary'
 import { CourseBuilder } from './pages/SuperAdmin/CourseBuilder'
 import { SplitScreenCourseBuilder } from './pages/SuperAdmin/SplitScreenCourseBuilder'
 import { TopicEditor } from './pages/SuperAdmin/TopicEditor'
+import { QuizBuilder } from './pages/SuperAdmin/QuizBuilder'
 
 function App() {
   return (
@@ -21,6 +22,9 @@ function App() {
         <Route path="/content-library/builder/:courseId" element={<SplitScreenCourseBuilder />} />
         {/* Topic editor */}
         <Route path="/content-library/builder/:courseId/module/:moduleId/topic/:topicId" element={<TopicEditor />} />
+        {/* Quiz builder */}
+        <Route path="/content-library/builder/:courseId/module/:moduleId/quiz/:quizId" element={<QuizBuilder />} />
+        <Route path="/content-library/builder/:courseId/module/:moduleId/quiz/new" element={<QuizBuilder />} />
       </Routes>
     </BrowserRouter>
   )
