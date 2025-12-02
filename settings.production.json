@@ -1,0 +1,12 @@
+{
+  "private": {
+    "jwtSecret": "lms-production-secret-key-2024-super-secure",
+    "mongoUrl": "mongodb+srv://tayeshobajo:1Manchester_sm@kv8slwx.mongodb.net/bioptrics-lms?retryWrites=true&w=majority"
+  },
+  "public": {
+    "appName": "Bioptrics LMS - Production",
+    "environment": "production",
+    "apiUrl": "https://pulse-dev.bioptrics.com/api",
+    "version": "1.0.0"
+  }
+}

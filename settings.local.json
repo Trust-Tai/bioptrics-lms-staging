@@ -1,0 +1,12 @@
+{
+  "private": {
+    "jwtSecret": "lms-local-development-secret-key-2024",
+    "mongoUrl": "mongodb://localhost:27017/bioptrics-lms-local"
+  },
+  "public": {
+    "appName": "Bioptrics LMS - Local Development",
+    "environment": "development",
+    "apiUrl": "http://localhost:5000/api",
+    "version": "1.0.0"
+  }
+}

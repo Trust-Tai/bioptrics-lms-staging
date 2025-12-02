@@ -1,0 +1,179 @@
+const mongoose = require('mongoose');
+
+const courseSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: [true, 'Course title is required'],
+    trim: true,
+    maxlength: [200, 'Course title cannot be more than 200 characters']
+  },
+  description: {
+    type: String,
+    required: [true, 'Course description is required'],
+    trim: true,
+    maxlength: [1000, 'Course description cannot be more than 1000 characters']
+  },
+  status: {
+    type: String,
+    enum: ['draft', 'published', 'archived'],
+    default: 'draft'
+  },
+  topic: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 300
+  },
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  // New hierarchical structure
+  modules: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Module'
+  }],
+  // Course-level learning objectives
+  learningObjectives: [{
+    id: String,
+    text: String,
+    order: Number
+  }],
+  // Target audience
+  learnerAudience: {
+    type: String,
+    enum: ['Beginners', 'Intermediate', 'Advanced', 'All Levels'],
+    default: 'All Levels'
+  },
+  // Course duration
+  estimatedHours: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  estimatedMinutes: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // Legacy block support (for backward compatibility)
+  blocks: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Block'
+  }],
+  isTemplate: {
+    type: Boolean,
+    default: false
+  },
+  templateCategory: {
+    type: String,
+    enum: ['Business Ethics', 'Career Management', 'Change Management', 'Communication', 'Compliance', 'Critical Thinking', 'Customer Service'],
+    required: function() { return this.isTemplate; }
+  },
+  metrics: {
+    enrollments: { type: Number, default: 0 },
+    completions: { type: Number, default: 0 },
+    averageRating: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 }
+  },
+  settings: {
+    allowComments: { type: Boolean, default: true },
+    requireCompletion: { type: Boolean, default: false },
+    certificateEnabled: { type: Boolean, default: false },
+    price: { type: Number, default: 0 },
+    currency: { type: String, default: 'USD' }
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  publishedAt: {
+    type: Date,
+    default: null
+  },
+  lastModified: {
+    type: Date,
+    default: Date.now
+  }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Indexes for better query performance
+courseSchema.index({ title: 'text', description: 'text' });
+courseSchema.index({ status: 1 });
+courseSchema.index({ category: 1 });
+courseSchema.index({ createdBy: 1 });
+courseSchema.index({ organizationId: 1 });
+courseSchema.index({ isTemplate: 1, templateCategory: 1 });
+courseSchema.index({ 'metrics.rating': -1 });
+courseSchema.index({ createdAt: -1 });
+
+// Virtual for block count
+courseSchema.virtual('blockCount').get(function() {
+  return this.blocks ? this.blocks.length : 0;
+});
+
+// Virtual for completion rate
+courseSchema.virtual('completionRate').get(function() {
+  if (this.metrics.enrollments === 0) return 0;
+  return Math.round((this.metrics.completions / this.metrics.enrollments) * 100);
+});
+
+// Virtual for average rating display
+courseSchema.virtual('averageRating').get(function() {
+  return this.metrics.ratingCount > 0 ? 
+    Math.round(this.metrics.rating * 10) / 10 : 0;
+});
+
+// Update lastModified before saving
+courseSchema.pre('save', function(next) {
+  this.lastModified = new Date();
+  
+  // Set publishedAt when status changes to published
+  if (this.isModified('status') && this.status === 'published' && !this.publishedAt) {
+    this.publishedAt = new Date();
+  }
+  
+  next();
+});
+
+// Static method to find published courses
+courseSchema.statics.findPublished = function(filters = {}) {
+  return this.find({ 
+    status: 'published', 
+    isActive: true,
+    ...filters 
+  }).populate('createdBy', 'name email')
+    .populate('blocks')
+    .sort({ createdAt: -1 });
+};
+
+// Static method to find templates
+courseSchema.statics.findTemplates = function(category = null) {
+  const query = { isTemplate: true, isActive: true };
+  if (category) query.templateCategory = category;
+  
+  return this.find(query)
+    .populate('createdBy', 'name email')
+    .sort({ title: 1 });
+};
+
+// Instance method to update metrics
+courseSchema.methods.updateMetrics = function(metricType, value = 1) {
+  if (this.metrics[metricType] !== undefined) {
+    this.metrics[metricType] += value;
+    return this.save({ validateBeforeSave: false });
+  }
+  return Promise.resolve(this);
+};
+
+module.exports = mongoose.model('Course', courseSchema);
