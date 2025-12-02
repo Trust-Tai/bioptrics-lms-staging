@@ -35,11 +35,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes (will be added in later phases)
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/courses', require('./routes/courses'));
-app.use('/api/organizations', require('./routes/organizations'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

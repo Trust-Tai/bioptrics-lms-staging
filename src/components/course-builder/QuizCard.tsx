@@ -9,13 +9,25 @@ interface QuizCardProps {
   moduleId: string;
   courseId: string;
   onDelete: (moduleId: string, quizId: string) => void;
+  isEditing?: boolean;
+  editingTitle?: string;
+  onStartEdit?: (quizId: string, currentTitle: string) => void;
+  onFinishEdit?: (moduleId: string, quizId: string) => void;
+  onCancelEdit?: () => void;
+  onTitleChange?: (title: string) => void;
 }
 
 export const QuizCard: React.FC<QuizCardProps> = ({
   quiz,
   moduleId,
   courseId,
-  onDelete
+  onDelete,
+  isEditing = false,
+  editingTitle = '',
+  onStartEdit,
+  onFinishEdit,
+  onCancelEdit,
+  onTitleChange
 }) => {
   const navigate = useNavigate();
 
@@ -67,9 +79,35 @@ export const QuizCard: React.FC<QuizCardProps> = ({
           
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm text-gray-900 font-medium hover:text-primary-600 transition-colors">
-                {quiz.title}
-              </span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => onTitleChange?.(e.target.value)}
+                  onBlur={() => onFinishEdit?.(moduleId, quiz.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      onFinishEdit?.(moduleId, quiz.id);
+                    } else if (e.key === 'Escape') {
+                      onCancelEdit?.();
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-sm text-gray-900 font-medium bg-white border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
+                  autoFocus
+                />
+              ) : (
+                <span 
+                  className="text-sm text-gray-900 font-medium hover:text-blue-600 cursor-pointer transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartEdit?.(quiz.id, quiz.title);
+                  }}
+                  title="Click to edit quiz title"
+                >
+                  {quiz.title}
+                </span>
+              )}
               <span className={`px-2 py-1 text-xs font-medium rounded-full ${getQuizStatusColor(quiz.status)}`}>
                 {quiz.status}
               </span>

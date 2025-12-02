@@ -23,18 +23,23 @@ export const QuizBuilder: React.FC = () => {
       shuffleOptions: false,
       showCorrectAnswers: true,
       showScoreImmediately: true,
-      requireCompletion: false
+      requireCompletion: false,
+      displayMode: 'multi-step' as 'all-in-one' | 'multi-step',
+      questionsPerPage: 1,
+      showThankYouScreen: true,
+      thankYouMessage: 'Thank you for completing the quiz! Your results have been recorded.',
+      buttonColor: '#3b82f6'
     },
     status: 'draft',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   });
   
-  const [activeTab, setActiveTab] = useState<'content' | 'outline'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'outline' | 'settings'>('content');
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [settingsTab, setSettingsTab] = useState<'content' | 'style'>('content');
   const [collapsedCategories, setCollapsedCategories] = useState<{ [key: string]: boolean }>({
-    'Basic Questions': true
+    'Question type': false
   });
 
   // Mock data for development
@@ -56,7 +61,7 @@ export const QuizBuilder: React.FC = () => {
       if (isCurrentlyCollapsed) {
         // If clicking on a collapsed category, close all others and open this one
         return {
-          'Basic Questions': true,
+          'Question type': true,
           [categoryName]: false
         };
       } else {
@@ -135,9 +140,19 @@ export const QuizBuilder: React.FC = () => {
     }
   };
 
+  const handleUpdateQuizSettings = (updates: Partial<any>) => {
+    setQuiz((prev: any) => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        ...updates
+      }
+    }));
+  };
+
   const questionBlockLibrary = [
     {
-      category: 'Basic Questions',
+      category: 'Question type',
       blocks: [
         { id: 'single-choice', name: 'Single Choice' },
         { id: 'multiple-choice', name: 'Multiple Choice' },
@@ -261,6 +276,17 @@ export const QuizBuilder: React.FC = () => {
 
                       {/* Question Content */}
                       <div className="p-6">
+                        {/* Question Image (above question text) */}
+                        {question.imageUrl && (
+                          <div className="mb-4">
+                            <img 
+                              src={question.imageUrl} 
+                              alt="Question" 
+                              className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200"
+                            />
+                          </div>
+                        )}
+
                         {/* Question Text */}
                         <div className="mb-4">
                           <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -268,31 +294,23 @@ export const QuizBuilder: React.FC = () => {
                           </h3>
                         </div>
 
-                        {/* Question Image */}
-                        <div className="mb-6">
-                          {question.imageUrl ? (
-                            <div className="relative">
-                              <img 
-                                src={question.imageUrl} 
-                                alt="Question" 
-                                className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200"
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-full max-w-md h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                              <div className="text-center">
-                                <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <p className="text-xs text-gray-500">No image</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        {/* Question Explanation (below question text) */}
+                        {question.explanation && (
+                          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                            <p className="text-sm text-blue-800">
+                              <span className="font-medium">Explanation: </span>
+                              {question.explanation}
+                            </p>
+                          </div>
+                        )}
 
                         {/* Options for Single/Multiple Choice */}
                         {(question.type === 'single-choice' || question.type === 'multiple-choice') && question.options && (
-                          <div className="space-y-3">
+                          <div className={`gap-3 ${
+                            (question as any).columnLayout === 2 ? 'grid grid-cols-2' :
+                            (question as any).columnLayout === 3 ? 'grid grid-cols-3' :
+                            'space-y-3'
+                          }`}>
                             {question.options.map((option, optIndex) => (
                               <div 
                                 key={option.id} 
@@ -351,7 +369,7 @@ export const QuizBuilder: React.FC = () => {
 
         {/* Center Sidebar - Question Types (hidden when settings panel is open) */}
         {!selectedQuestion && (
-          <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full">
+          <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-full">
             <div className="flex-1 overflow-y-auto">
               <div className="p-6">
                 {/* Tab Navigation */}
@@ -375,6 +393,16 @@ export const QuizBuilder: React.FC = () => {
                     }`}
                   >
                     Outline
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('settings')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                      activeTab === 'settings' 
+                        ? 'border-blue-500 text-blue-600' 
+                        : 'border-transparent text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Settings
                   </button>
                 </div>
 
@@ -427,16 +455,261 @@ export const QuizBuilder: React.FC = () => {
 
                 {activeTab === 'outline' && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Quiz Outline</h3>
-                    <div className="space-y-2">
-                      {quiz.questions.map((question, index) => (
-                        <div key={question.id} className="p-2 bg-gray-50 rounded text-sm">
-                          {index + 1}. {question.questionText || 'Untitled Question'}
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Outline</h3>
+                    <div className="space-y-4">
+                      {/* Module #1: Welcome and Overview */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">Module #1: Welcome and Overview</h4>
+                        <div className="space-y-1 ml-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                            <span>Topic #1: Introduction</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                            <span>Topic #2: Introduction</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                            <span>Topic #3: Introduction</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-blue-600 font-medium">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span>Quiz #1: Evaluation</span>
+                          </div>
                         </div>
-                      ))}
-                      {quiz.questions.length === 0 && (
-                        <p className="text-gray-500 text-sm italic">No questions added yet</p>
+                      </div>
+
+                      {/* Module #2: Core Concepts */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">Module #2: Core Concepts</h4>
+                        <div className="space-y-1 ml-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                            <span>Topic #1: Introduction</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span>Quiz #1: Evaluation</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Current Quiz Questions Section */}
+                      <div className="border-t border-gray-200 pt-4 mt-6">
+                        <h4 className="font-medium text-gray-900 mb-2">Current Quiz Questions</h4>
+                        <div className="space-y-2 ml-4">
+                          {quiz.questions.map((question, index) => (
+                            <div key={question.id} className="flex items-center gap-2 text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                              <span>{index + 1}. {question.questionText || 'Untitled Question'}</span>
+                            </div>
+                          ))}
+                          {quiz.questions.length === 0 && (
+                            <p className="text-gray-500 text-sm italic">No questions added yet</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'settings' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Quiz Settings</h3>
+                    <div className="space-y-6">
+                      {/* Display Mode */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-3">
+                          Display Mode
+                        </label>
+                        <div className="space-y-2">
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="displayMode"
+                              value="all-in-one"
+                              checked={quiz.settings.displayMode === 'all-in-one'}
+                              onChange={(e) => handleUpdateQuizSettings({ displayMode: e.target.value })}
+                              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="ml-2 text-sm text-gray-700">All questions on one page</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="displayMode"
+                              value="multi-step"
+                              checked={quiz.settings.displayMode === 'multi-step'}
+                              onChange={(e) => handleUpdateQuizSettings({ displayMode: e.target.value })}
+                              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="ml-2 text-sm text-gray-700">Multi-step (one or more questions per page)</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Questions Per Page (only show if multi-step) */}
+                      {quiz.settings.displayMode === 'multi-step' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 mb-2">
+                            Questions Per Page
+                          </label>
+                          <input
+                            type="number"
+                            value={quiz.settings.questionsPerPage}
+                            onChange={(e) => handleUpdateQuizSettings({ questionsPerPage: parseInt(e.target.value) || 1 })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            min="1"
+                            max="50"
+                            placeholder="1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Enter number of questions per page (1-50). Default: 1</p>
+                        </div>
                       )}
+
+                      {/* Navigation Button Settings (only show if multi-step) */}
+                      {quiz.settings.displayMode === 'multi-step' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 mb-3">
+                            Navigation Button Color
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="color"
+                              value={quiz.settings.buttonColor || '#3b82f6'}
+                              onChange={(e) => handleUpdateQuizSettings({ buttonColor: e.target.value })}
+                              className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                            />
+                            <input
+                              type="text"
+                              value={quiz.settings.buttonColor || '#3b82f6'}
+                              onChange={(e) => handleUpdateQuizSettings({ buttonColor: e.target.value })}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="#3b82f6"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Color for Next/Previous navigation buttons</p>
+                        </div>
+                      )}
+
+                      {/* Thank You Screen */}
+                      <div>
+                        <label className="flex items-center mb-3">
+                          <input
+                            type="checkbox"
+                            checked={quiz.settings.showThankYouScreen}
+                            onChange={(e) => handleUpdateQuizSettings({ showThankYouScreen: e.target.checked })}
+                            className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+                          />
+                          <span className="ml-2 text-sm font-medium text-gray-900">Show thank you screen after submission</span>
+                        </label>
+                        
+                        {quiz.settings.showThankYouScreen && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Thank You Message
+                            </label>
+                            <textarea
+                              value={quiz.settings.thankYouMessage || ''}
+                              onChange={(e) => handleUpdateQuizSettings({ thankYouMessage: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              rows={3}
+                              placeholder="Thank you for completing the quiz! Your results have been recorded."
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Existing Quiz Settings */}
+                      <div className="border-t border-gray-200 pt-6">
+                        <h4 className="text-md font-medium text-gray-900 mb-4">Additional Settings</h4>
+                        
+                        <div className="space-y-4">
+                          {/* Passing Score */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Passing Score (%)
+                            </label>
+                            <input
+                              type="number"
+                              value={quiz.settings.passingScore}
+                              onChange={(e) => handleUpdateQuizSettings({ passingScore: parseInt(e.target.value) || 80 })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              min="0"
+                              max="100"
+                            />
+                          </div>
+
+                          {/* Max Attempts */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Maximum Attempts
+                            </label>
+                            <input
+                              type="number"
+                              value={quiz.settings.maxAttempts}
+                              onChange={(e) => handleUpdateQuizSettings({ maxAttempts: parseInt(e.target.value) || 3 })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              min="1"
+                              max="10"
+                            />
+                          </div>
+
+                          {/* Checkboxes for other settings */}
+                          <div className="space-y-3">
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={quiz.settings.allowRetakes}
+                                onChange={(e) => handleUpdateQuizSettings({ allowRetakes: e.target.checked })}
+                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+                              />
+                              <span className="ml-2 text-sm text-gray-700">Allow retakes</span>
+                            </label>
+
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={quiz.settings.shuffleQuestions}
+                                onChange={(e) => handleUpdateQuizSettings({ shuffleQuestions: e.target.checked })}
+                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+                              />
+                              <span className="ml-2 text-sm text-gray-700">Shuffle questions</span>
+                            </label>
+
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={quiz.settings.shuffleOptions}
+                                onChange={(e) => handleUpdateQuizSettings({ shuffleOptions: e.target.checked })}
+                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+                              />
+                              <span className="ml-2 text-sm text-gray-700">Shuffle answer options</span>
+                            </label>
+
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={quiz.settings.showCorrectAnswers}
+                                onChange={(e) => handleUpdateQuizSettings({ showCorrectAnswers: e.target.checked })}
+                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+                              />
+                              <span className="ml-2 text-sm text-gray-700">Show correct answers after submission</span>
+                            </label>
+
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={quiz.settings.showScoreImmediately}
+                                onChange={(e) => handleUpdateQuizSettings({ showScoreImmediately: e.target.checked })}
+                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+                              />
+                              <span className="ml-2 text-sm text-gray-700">Show score immediately</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -661,13 +934,58 @@ export const QuizBuilder: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="bg-white p-8 rounded-lg border border-gray-200 text-center">
-                    <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {/* Column Layout Settings */}
+                  {(selectedQuestion.type === 'single-choice' || selectedQuestion.type === 'multiple-choice') && (
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      <label className="block text-sm font-semibold text-gray-900 mb-3">
+                        Option Layout
+                      </label>
+                      <div className="space-y-3">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name={`columnLayout-${selectedQuestion.id}`}
+                            value="1"
+                            checked={(selectedQuestion as any).columnLayout === 1 || !(selectedQuestion as any).columnLayout}
+                            onChange={(e) => handleUpdateQuestion(selectedQuestion.id, { columnLayout: parseInt(e.target.value) })}
+                            className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">Single column (default)</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name={`columnLayout-${selectedQuestion.id}`}
+                            value="2"
+                            checked={(selectedQuestion as any).columnLayout === 2}
+                            onChange={(e) => handleUpdateQuestion(selectedQuestion.id, { columnLayout: parseInt(e.target.value) })}
+                            className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">Two columns</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name={`columnLayout-${selectedQuestion.id}`}
+                            value="3"
+                            checked={(selectedQuestion as any).columnLayout === 3}
+                            onChange={(e) => handleUpdateQuestion(selectedQuestion.id, { columnLayout: parseInt(e.target.value) })}
+                            className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">Three columns</span>
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">Choose how answer options are displayed</p>
+                    </div>
+                  )}
+
+                  {/* Other Style Settings Placeholder */}
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 text-center">
+                    <svg className="w-8 h-8 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                     </svg>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Style Settings</h3>
-                    <p className="text-sm text-gray-500">Customize the appearance and styling of your question</p>
-                    <div className="mt-4 text-xs text-gray-400">Coming soon...</div>
+                    <h4 className="text-md font-medium text-gray-900 mb-2">Additional Style Options</h4>
+                    <p className="text-sm text-gray-500">More styling options coming soon</p>
                   </div>
                 </div>
               )}
